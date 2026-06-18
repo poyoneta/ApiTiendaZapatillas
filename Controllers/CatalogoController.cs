@@ -1,4 +1,5 @@
 ﻿using ApiTiendaZapas.Data;
+using ApiTiendaZapas.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -49,6 +50,19 @@ namespace ApiTiendaZapas.Controllers
 
             return Ok(zapatillas);
         }
+        [HttpGet("{zapatillaId}/variantes")]
+        public async Task<IActionResult> ObtenerVariantes(int zapatillaId)
+        {
+            var variantes = await _context.Variantes
+                .Include(v => v.Color)
+                .Where(v => v.ZapatillaId == zapatillaId)
+                .ToListAsync();
+
+            return Ok(variantes);
+        }
+
+    }
     }
 
-}
+
+
