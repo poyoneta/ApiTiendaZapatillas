@@ -61,6 +61,8 @@ namespace ApiTiendaZapas.Controllers
             return Ok(variantes);
         }
 
+        // imagenes en proceso.............. 
+
     }
     }
 
