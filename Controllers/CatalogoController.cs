@@ -100,5 +100,11 @@ namespace ApiTiendaZapas.Controllers
             var imagenes = await _context.Imagenes.ToListAsync();
             return Ok(imagenes);
         }
+        [HttpGet("marcas")]
+        public async Task<IActionResult> ObtenerMarcas()
+        {
+            var marcas = await _context.Marcas.ToListAsync();
+            return Ok(marcas);
+        }
     }
 }
