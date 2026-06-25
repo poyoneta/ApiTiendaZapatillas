@@ -13,5 +13,6 @@
 
         public Zapatilla? Zapatilla { get; set; }
         public Color? Color { get; set; }
+        public ICollection<Imagen> Imagenes { get; set; } = new List<Imagen>();
     }
 }
