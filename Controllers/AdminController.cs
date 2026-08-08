@@ -3,9 +3,10 @@ using ApiTiendaZapas.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace ApiTiendaZapas.Controllers
@@ -15,12 +16,13 @@ namespace ApiTiendaZapas.Controllers
     public class AdminController : ControllerBase
     {
         private readonly ZapatillasContext _context;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
 
-        public AdminController(ZapatillasContext context, IWebHostEnvironment environment)
+        // Inyectamos IConfiguration para leer Supabase:Url y Supabase:AnonKey
+        public AdminController(ZapatillasContext context, IConfiguration configuration)
         {
             _context = context;
-            _environment = environment;
+            _configuration = configuration;
         }
 
         [HttpPost("marcas")]
@@ -59,7 +61,6 @@ namespace ApiTiendaZapas.Controllers
             return Ok(variante);
         }
 
-        // Cambiamos "imagenes" por "subir-imagen" para destrabar a Swagger definitivamente
         [HttpPost("subir-imagen")]
         public async Task<IActionResult> CrearImagen([FromForm] FormSubirImagen modelo)
         {
@@ -72,34 +73,43 @@ namespace ApiTiendaZapas.Controllers
 
             try
             {
-                // 2. Definir la ruta en wwwroot/uploads
-                string baseRoot = _environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                string folderPath = Path.Combine(baseRoot, "uploads");
+                // 2. Obtener la configuración de Supabase desde appsettings.Development.json
+                string supabaseUrl = _configuration["Supabase:Url"]!;
+                string anonKey = _configuration["Supabase:AnonKey"]!;
+                string bucketName = "zapatillas-imagenes"; // Nombre exacto del bucket público en Supabase
 
-                if (!Directory.Exists(folderPath))
+                // 3. Generar un nombre único para la imagen
+                string nombreUnico = $"{Guid.NewGuid()}{Path.GetExtension(modelo.Archivo.FileName)}";
+
+                // 4. Subir la imagen a Supabase Storage mediante petición HTTP
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {anonKey}");
+                client.DefaultRequestHeaders.Add("apiKey", anonKey);
+
+                using var stream = modelo.Archivo.OpenReadStream();
+                using var content = new StreamContent(stream);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(modelo.Archivo.ContentType);
+
+                // AGREGAMOS ?upsert=true AL FINAL DE LA RUTA
+                string uploadEndpoint = $"{supabaseUrl}/storage/v1/object/{bucketName}/{nombreUnico}?upsert=true";
+                var response = await client.PostAsync(uploadEndpoint, content);
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    Directory.CreateDirectory(folderPath);
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, $"Error al subir a Supabase Storage: {errorResponse}");
                 }
 
-                // 3. Generar un nombre único para que no se pisen los archivos
-                string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(modelo.Archivo.FileName);
-                string filePath = Path.Combine(folderPath, nombreUnico);
+                // 5. Construir la URL pública de la imagen alojada en Supabase
+                string urlPublica = $"{supabaseUrl}/storage/v1/object/public/{bucketName}/{nombreUnico}";
 
-                // 4. Guardar físicamente el archivo en el disco
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await modelo.Archivo.CopyToAsync(stream);
-                }
-
-                // 5. Guardar la referencia en la Base de Datos
-                string urlRelativa = $"/uploads/{nombreUnico}";
-
+                // 6. Guardar la referencia con la URL pública en PostgreSQL
                 var nuevaImagen = new Imagen
                 {
-                    Url = urlRelativa,
+                    Url = urlPublica,
                     Orden = modelo.Orden,
-                    Id_zapatilla = modelo.Id_zapatilla ?? 0, // Si es null, usa 0
-                    Id_variante = (modelo.Id_variante == 0) ? null : modelo.Id_variante // ¡ESTO ES CLAVE!
+                    Id_zapatilla = (modelo.Id_zapatilla == 0) ? null : modelo.Id_zapatilla,
+                    Id_variante = (modelo.Id_variante == 0) ? null : modelo.Id_variante
                 };
 
                 _context.Imagenes.Add(nuevaImagen);
@@ -111,16 +121,6 @@ namespace ApiTiendaZapas.Controllers
             {
                 return StatusCode(500, $"Error interno al procesar la imagen: {ex.Message}");
             }
-        }
-
-        // PEGÁ ESTA CLASE AUXILIAR JUSTO ABAJO DEL MÉTODO ANTERIOR (O AL FINAL DEL CONTROLADOR)
-        public class FormSubirImagen
-        {
-            // Al agregar el ? le decimos a .NET que puede arrancar vacía y se va el cartel amarillo
-            public IFormFile? Archivo { get; set; }
-            public int Orden { get; set; }
-            public int? Id_zapatilla { get; set; }
-            public int? Id_variante { get; set; }
         }
 
         [HttpDelete("zapatillas/{id}")]
@@ -137,5 +137,13 @@ namespace ApiTiendaZapas.Controllers
 
             return NoContent();
         }
+    }
+
+    public class FormSubirImagen
+    {
+        public IFormFile? Archivo { get; set; }
+        public int Orden { get; set; }
+        public int? Id_zapatilla { get; set; }
+        public int? Id_variante { get; set; }
     }
 }

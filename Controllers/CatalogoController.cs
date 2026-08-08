@@ -25,46 +25,23 @@ namespace ApiTiendaZapas.Controllers
             var zapatillas = await _context.Zapatillas
                 .Include(z => z.Marca)
                 .Include(z => z.Imagenes)
-                .Include(z => z.Variantes)
-                    .ThenInclude(v => v.Imagenes)
                 .ToListAsync();
 
             return Ok(zapatillas);
         }
         
-        [HttpGet("{id}")] // Esto define que la ruta es api/Catalogo/3
-        public async Task<IActionResult> ObtenerProducto(int id)
-        {
-            var zapatilla = await _context.Zapatillas
-                .Include(z => z.Marca)
-                .Include(z => z.Imagenes)
-                .Include(z => z.Variantes)
-                .ThenInclude(v => v.Color)
-                .FirstOrDefaultAsync(z => z.Id == id);
+        [HttpGet("{id}")]
+public async Task<IActionResult> ObtenerProducto(int id)
+{
+    var zapatilla = await _context.Zapatillas
+        .Include(z => z.Marca)
+        .Include(z => z.Imagenes)
+        .AsNoTracking()
+        .FirstOrDefaultAsync(z => z.Id == id);
 
-            if (zapatilla == null) return NotFound();
-
-            return Ok(zapatilla);
-        }
-
-        // 2. OBTENER DETALLE POR ID -> Ruta: api/Catalogo/detalle/{id}
-        [HttpGet("detalle/{id}")]
-        public async Task<IActionResult> ObtenerPorId(int id)
-        {
-            var zapatilla = await _context.Zapatillas
-                .Include(z => z.Marca)
-                .Include(z => z.Imagenes)
-                .Include(z => z.Variantes)
-                    .ThenInclude(v => v.Imagenes)
-                .Include(z => z.Variantes)
-                    .ThenInclude(v => v.Color)
-                .FirstOrDefaultAsync(z => z.Id == id);
-
-            if (zapatilla == null)
-                return NotFound();
-
-            return Ok(zapatilla);
-        }
+    if (zapatilla == null) return NotFound();
+    return Ok(zapatilla);
+}
 
         // 3. OBTENER FILTRADO POR MARCA -> Ruta: api/Catalogo/marca/{marcaId}
         [HttpGet("marca/{marcaId}")]

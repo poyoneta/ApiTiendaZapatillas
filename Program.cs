@@ -35,7 +35,14 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<ZapatillasContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            npgsqlOptions.EnableRetryOnFailure(
+    maxRetryCount: 3,
+    maxRetryDelay: TimeSpan.FromSeconds(5),
+    errorCodesToAdd: null);
+        }
     )
 );
 var app = builder.Build();
