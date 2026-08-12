@@ -57,6 +57,8 @@ builder.Services.AddDbContext<ZapatillasContext>(options =>
 // Repositories y Services (arquitectura en capas)
 builder.Services.AddScoped<IZapatillaRepository, ZapatillaRepository>();
 builder.Services.AddScoped<ICatalogoService, CatalogoService>();
+builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 var app = builder.Build();
 
