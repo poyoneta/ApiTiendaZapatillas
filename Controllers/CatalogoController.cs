@@ -1,9 +1,5 @@
-﻿using ApiTiendaZapas.Data;
-using ApiTiendaZapas.Models;
+﻿using ApiTiendaZapas.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ApiTiendaZapas.Controllers
 {
@@ -11,76 +7,46 @@ namespace ApiTiendaZapas.Controllers
     [Route("api/[controller]")]
     public class CatalogoController : ControllerBase
     {
-        private readonly ZapatillasContext _context;
+        private readonly ICatalogoService _catalogoService;
 
-        public CatalogoController(ZapatillasContext context)
+        public CatalogoController(ICatalogoService catalogoService)
         {
-            _context = context;
+            _catalogoService = catalogoService;
         }
 
-        // 1. OBTENER TODO EL CATÁLOGO -> Ruta: api/Catalogo
         [HttpGet]
         public async Task<IActionResult> ObtenerCatalogo()
         {
-            var zapatillas = await _context.Zapatillas
-                .Include(z => z.Marca)
-                .Include(z => z.Imagenes)
-                .ToListAsync();
-
+            var zapatillas = await _catalogoService.ObtenerCatalogoAsync();
             return Ok(zapatillas);
         }
-        
+
         [HttpGet("{id}")]
-public async Task<IActionResult> ObtenerProducto(int id)
-{
-    var zapatilla = await _context.Zapatillas
-        .Include(z => z.Marca)
-        .Include(z => z.Imagenes)
-        .AsNoTracking()
-        .FirstOrDefaultAsync(z => z.Id == id);
+        public async Task<IActionResult> ObtenerProducto(int id)
+        {
+            var zapatilla = await _catalogoService.ObtenerProductoAsync(id);
+            if (zapatilla == null) return NotFound();
+            return Ok(zapatilla);
+        }
 
-    if (zapatilla == null) return NotFound();
-    return Ok(zapatilla);
-}
-
-        // 3. OBTENER FILTRADO POR MARCA -> Ruta: api/Catalogo/marca/{marcaId}
         [HttpGet("marca/{marcaId}")]
         public async Task<IActionResult> ObtenerPorMarca(int marcaId)
         {
-            var zapatillas = await _context.Zapatillas
-                .Include(z => z.Imagenes)
-                .Include(z => z.Variantes)
-                    .ThenInclude(v => v.Imagenes)
-                .Where(z => z.MarcaId == marcaId)
-                .ToListAsync();
-
+            var zapatillas = await _catalogoService.ObtenerPorMarcaAsync(marcaId);
             return Ok(zapatillas);
         }
 
-        // 4. OBTENER VARIANTES -> Ruta: api/Catalogo/variantes/{zapatillaId}
-        [HttpGet("variantes/{zapatillaId}")]
-        public async Task<IActionResult> ObtenerVariantes(int zapatillaId)
-        {
-            var variantes = await _context.Variantes
-                .Include(v => v.Color)
-                .Include(v => v.Imagenes)
-                .Where(v => v.ZapatillaId == zapatillaId)
-                .ToListAsync();
-
-            return Ok(variantes);
-        }
-
-        // 5. OBTENER TODAS LAS IMÁGENES -> Ruta: api/Catalogo/imagenes
         [HttpGet("imagenes")]
         public async Task<IActionResult> ObtenerTodasLasImagenes()
         {
-            var imagenes = await _context.Imagenes.ToListAsync();
+            var imagenes = await _catalogoService.ObtenerTodasLasImagenesAsync();
             return Ok(imagenes);
         }
+
         [HttpGet("marcas")]
         public async Task<IActionResult> ObtenerMarcas()
         {
-            var marcas = await _context.Marcas.ToListAsync();
+            var marcas = await _catalogoService.ObtenerMarcasAsync();
             return Ok(marcas);
         }
     }
