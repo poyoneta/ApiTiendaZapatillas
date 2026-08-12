@@ -1,5 +1,6 @@
 ﻿using ApiTiendaZapas.Models;
 using ApiTiendaZapas.Repositories;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ApiTiendaZapas.Services
 {
@@ -35,6 +36,10 @@ namespace ApiTiendaZapas.Services
         public async Task<List<Imagen>> ObtenerTodasLasImagenesAsync()
         {
             return await _zapatillaRepo.ObtenerTodasLasImagenesAsync();
+        }
+        public async Task<List<Variante>> ObtenerVariantesPorZapatillaAsync(int zapatillaId)
+        {
+            return await _zapatillaRepo.ObtenerVariantesPorZapatillaAsync(zapatillaId);
         }
     }
 }

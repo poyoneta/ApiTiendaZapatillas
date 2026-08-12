@@ -36,6 +36,13 @@ namespace ApiTiendaZapas.Controllers
             return Ok(zapatillas);
         }
 
+        [HttpGet("variantes/{zapatillaId}")]
+        public async Task<IActionResult> ObtenerVariantes(int zapatillaId)
+        {
+            var variantes = await _catalogoService.ObtenerVariantesPorZapatillaAsync(zapatillaId);
+            return Ok(variantes);
+        }
+
         [HttpGet("imagenes")]
         public async Task<IActionResult> ObtenerTodasLasImagenes()
         {

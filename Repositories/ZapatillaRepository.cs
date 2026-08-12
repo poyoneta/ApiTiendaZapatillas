@@ -12,7 +12,14 @@ namespace ApiTiendaZapas.Repositories
         {
             _context = context;
         }
-
+        public async Task<List<Variante>> ObtenerVariantesPorZapatillaAsync(int zapatillaId)
+        {
+            return await _context.Variantes
+                .Include(v => v.Color)
+                .Include(v => v.Imagenes)
+                .Where(v => v.ZapatillaId == zapatillaId)
+                .ToListAsync();
+        }
         public async Task<List<Zapatilla>> ObtenerTodasAsync()
         {
             return await _context.Zapatillas
