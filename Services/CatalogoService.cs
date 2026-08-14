@@ -1,6 +1,5 @@
 ﻿using ApiTiendaZapas.Models;
 using ApiTiendaZapas.Repositories;
-using Microsoft.AspNetCore.Mvc;
 
 namespace ApiTiendaZapas.Services
 {
@@ -13,14 +12,19 @@ namespace ApiTiendaZapas.Services
             _zapatillaRepo = zapatillaRepo;
         }
 
-        public async Task<List<Zapatilla>> ObtenerCatalogoAsync()
+        public async Task<List<Zapatilla>> ObtenerCatalogoSimplificadoAsync()
         {
-            return await _zapatillaRepo.ObtenerTodasAsync();
+            return await _zapatillaRepo.ObtenerTodasSimplificadasAsync();
         }
 
-        public async Task<Zapatilla?> ObtenerProductoAsync(int id)
+        public async Task<Zapatilla?> ObtenerPorIdConColoresAsync(int id)
         {
-            return await _zapatillaRepo.ObtenerPorIdAsync(id);
+            return await _zapatillaRepo.ObtenerPorIdConColoresAsync(id);
+        }
+
+        public async Task<List<Variante>> ObtenerVariantesPorColorwayAsync(int zapatillaColorId)
+        {
+            return await _zapatillaRepo.ObtenerVariantesPorColorwayAsync(zapatillaColorId);
         }
 
         public async Task<List<Zapatilla>> ObtenerPorMarcaAsync(int marcaId)
@@ -36,10 +40,6 @@ namespace ApiTiendaZapas.Services
         public async Task<List<Imagen>> ObtenerTodasLasImagenesAsync()
         {
             return await _zapatillaRepo.ObtenerTodasLasImagenesAsync();
-        }
-        public async Task<List<Variante>> ObtenerVariantesPorZapatillaAsync(int zapatillaId)
-        {
-            return await _zapatillaRepo.ObtenerVariantesPorZapatillaAsync(zapatillaId);
         }
     }
 }

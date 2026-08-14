@@ -4,11 +4,18 @@ namespace ApiTiendaZapas.Repositories
 {
     public interface IZapatillaRepository
     {
-        Task<List<Zapatilla>> ObtenerTodasAsync();
-        Task<Zapatilla?> ObtenerPorIdAsync(int id);
+        // 1. Catálogo liviano para el Index
+        Task<List<Zapatilla>> ObtenerTodasSimplificadasAsync();
+
+        // 2. Detalle del producto (con colores e imágenes)
+        Task<Zapatilla?> ObtenerPorIdConColoresAsync(int id);
+
+        // 3. Variantes/Talles de un color específico
+        Task<List<Variante>> ObtenerVariantesPorColorwayAsync(int zapatillaColorId);
+
+        // Consultas auxiliares
         Task<List<Zapatilla>> ObtenerPorMarcaAsync(int marcaId);
         Task<List<Marca>> ObtenerMarcasAsync();
         Task<List<Imagen>> ObtenerTodasLasImagenesAsync();
-        Task<List<Variante>> ObtenerVariantesPorZapatillaAsync(int zapatillaId);
     }
 }

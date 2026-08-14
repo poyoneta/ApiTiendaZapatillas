@@ -13,21 +13,20 @@ namespace ApiTiendaZapas.Repositories
             _context = context;
         }
 
-        public async Task<List<Zapatilla>> ObtenerTodasAsync()
+        // 1. Obtiene las zapatillas con SOLO la imagen principal (para las tarjetas del index)
+        public async Task<List<Zapatilla>> ObtenerTodasSimplificadasAsync()
         {
             return await _context.Zapatillas
                 .Include(z => z.Marca)
                 .Include(z => z.ZapatillaColores)
-                    .ThenInclude(zc => zc.Color)
-                .Include(z => z.ZapatillaColores)
-                    .ThenInclude(zc => zc.Imagenes)
-                .Include(z => z.ZapatillaColores)
-                    .ThenInclude(zc => zc.Variantes)
+                    .ThenInclude(zc => zc.Imagenes.Where(i => i.Es_Principal))
+                .AsNoTracking()
                 .AsSplitQuery()
                 .ToListAsync();
         }
 
-        public async Task<Zapatilla?> ObtenerPorIdAsync(int id)
+        // 2. Obtiene la zapatilla seleccionada con sus colores y todas las fotos de cada color
+        public async Task<Zapatilla?> ObtenerPorIdConColoresAsync(int id)
         {
             return await _context.Zapatillas
                 .Include(z => z.Marca)
@@ -35,11 +34,18 @@ namespace ApiTiendaZapas.Repositories
                     .ThenInclude(zc => zc.Color)
                 .Include(z => z.ZapatillaColores)
                     .ThenInclude(zc => zc.Imagenes)
-                .Include(z => z.ZapatillaColores)
-                    .ThenInclude(zc => zc.Variantes)
-                .AsSplitQuery()
                 .AsNoTracking()
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(z => z.Id == id);
+        }
+
+        // 3. Obtiene únicamente los talles, precio y stock de un colorway al hacer clic en el color
+        public async Task<List<Variante>> ObtenerVariantesPorColorwayAsync(int zapatillaColorId)
+        {
+            return await _context.Variantes
+                .Where(v => v.ZapatillaColorId == zapatillaColorId)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         public async Task<List<Zapatilla>> ObtenerPorMarcaAsync(int marcaId)
@@ -47,33 +53,20 @@ namespace ApiTiendaZapas.Repositories
             return await _context.Zapatillas
                 .Include(z => z.Marca)
                 .Include(z => z.ZapatillaColores)
-                    .ThenInclude(zc => zc.Color)
-                .Include(z => z.ZapatillaColores)
-                    .ThenInclude(zc => zc.Imagenes)
-                .Include(z => z.ZapatillaColores)
-                    .ThenInclude(zc => zc.Variantes)
+                    .ThenInclude(zc => zc.Imagenes.Where(i => i.Es_Principal))
                 .Where(z => z.MarcaId == marcaId)
-                .AsSplitQuery()
-                .ToListAsync();
-        }
-
-        public async Task<List<Variante>> ObtenerVariantesPorZapatillaAsync(int zapatillaId)
-        {
-            return await _context.Variantes
-                .Include(v => v.ZapatillaColor)
-                    .ThenInclude(zc => zc!.Color)
-                .Where(v => v.ZapatillaColor!.ZapatillaId == zapatillaId)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
         public async Task<List<Marca>> ObtenerMarcasAsync()
         {
-            return await _context.Marcas.ToListAsync();
+            return await _context.Marcas.AsNoTracking().ToListAsync();
         }
 
         public async Task<List<Imagen>> ObtenerTodasLasImagenesAsync()
         {
-            return await _context.Imagenes.ToListAsync();
+            return await _context.Imagenes.AsNoTracking().ToListAsync();
         }
     }
 }
