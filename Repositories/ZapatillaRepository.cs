@@ -12,19 +12,18 @@ namespace ApiTiendaZapas.Repositories
         {
             _context = context;
         }
-        public async Task<List<Variante>> ObtenerVariantesPorZapatillaAsync(int zapatillaId)
-        {
-            return await _context.Variantes
-                .Include(v => v.Color)
-                .Include(v => v.Imagenes)
-                .Where(v => v.ZapatillaId == zapatillaId)
-                .ToListAsync();
-        }
+
         public async Task<List<Zapatilla>> ObtenerTodasAsync()
         {
             return await _context.Zapatillas
                 .Include(z => z.Marca)
-                .Include(z => z.Imagenes)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Color)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Imagenes)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Variantes)
+                .AsSplitQuery()
                 .ToListAsync();
         }
 
@@ -32,7 +31,13 @@ namespace ApiTiendaZapas.Repositories
         {
             return await _context.Zapatillas
                 .Include(z => z.Marca)
-                .Include(z => z.Imagenes)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Color)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Imagenes)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Variantes)
+                .AsSplitQuery()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(z => z.Id == id);
         }
@@ -40,10 +45,24 @@ namespace ApiTiendaZapas.Repositories
         public async Task<List<Zapatilla>> ObtenerPorMarcaAsync(int marcaId)
         {
             return await _context.Zapatillas
-                .Include(z => z.Imagenes)
-                .Include(z => z.Variantes)
-                    .ThenInclude(v => v.Imagenes)
+                .Include(z => z.Marca)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Color)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Imagenes)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Variantes)
                 .Where(z => z.MarcaId == marcaId)
+                .AsSplitQuery()
+                .ToListAsync();
+        }
+
+        public async Task<List<Variante>> ObtenerVariantesPorZapatillaAsync(int zapatillaId)
+        {
+            return await _context.Variantes
+                .Include(v => v.ZapatillaColor)
+                    .ThenInclude(zc => zc!.Color)
+                .Where(v => v.ZapatillaColor!.ZapatillaId == zapatillaId)
                 .ToListAsync();
         }
 

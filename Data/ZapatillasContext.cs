@@ -13,6 +13,7 @@ namespace ApiTiendaZapas.Data
         public DbSet<Marca> Marcas { get; set; }
         public DbSet<Zapatilla> Zapatillas { get; set; }
         public DbSet<Color> Colores { get; set; }
+        public DbSet<ZapatillaColor> Zapatilla_Colores { get; set; }
         public DbSet<Variante> Variantes { get; set; }
         public DbSet<Imagen> Imagenes { get; set; }
 
@@ -20,19 +21,26 @@ namespace ApiTiendaZapas.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Mapeo Zapatilla -> Imagen (Mantiene el borrado en cascada)
+            // Mapeo explicito a nombres de tablas en PascalCase exactos
+            modelBuilder.Entity<Marca>().ToTable("Marcas");
+            modelBuilder.Entity<Zapatilla>().ToTable("Zapatillas");
+            modelBuilder.Entity<Color>().ToTable("Colores");
+            modelBuilder.Entity<ZapatillaColor>().ToTable("Zapatilla_Colores");
+            modelBuilder.Entity<Imagen>().ToTable("Imagenes");
+            modelBuilder.Entity<Variante>().ToTable("Variantes");
+
+            // Relaciones ZapatillaColor -> Imagenes / Variantes (Borrado en cascada)
             modelBuilder.Entity<Imagen>()
-                .HasOne(i => i.Zapatilla)
-                .WithMany(z => z.Imagenes)
-                .HasForeignKey(i => i.Id_zapatilla)
+                .HasOne(i => i.ZapatillaColor)
+                .WithMany(zc => zc.Imagenes)
+                .HasForeignKey(i => i.ZapatillaColorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Mapeo Variante -> Imagen (Cambiamos a NoAction para que SQL Server no proteste)
-            modelBuilder.Entity<Imagen>()
-                .HasOne(i => i.Variante)
-                .WithMany(v => v.Imagenes)
-                .HasForeignKey(i => i.Id_variante)
-                .OnDelete(DeleteBehavior.NoAction); // <-- ESTE CAMBIO DESTRABA TODO
+            modelBuilder.Entity<Variante>()
+                .HasOne(v => v.ZapatillaColor)
+                .WithMany(zc => zc.Variantes)
+                .HasForeignKey(v => v.ZapatillaColorId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

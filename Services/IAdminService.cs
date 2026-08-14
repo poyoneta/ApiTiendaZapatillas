@@ -8,13 +8,11 @@ namespace ApiTiendaZapas.Services
         Task<Marca> CrearMarcaAsync(Marca marca);
         Task<Color> CrearColorAsync(Color color);
         Task<Zapatilla> CrearZapatillaAsync(Zapatilla zapatilla);
+        Task<ZapatillaColor> CrearZapatillaColorAsync(ZapatillaColor zapatillaColor);
         Task<Variante> CrearVarianteAsync(Variante variante);
-        Task<Imagen> SubirImagenAsync(IFormFile archivo, int orden, int? idZapatilla, int? idVariante);
+        Task<Imagen> SubirImagenAsync(IFormFile archivo, int orden, bool esPrincipal, int zapatillaColorId);
 
-        // Devuelve false si la zapatilla no existe
         Task<bool> EliminarZapatillaAsync(int id);
-
-        // Devuelve false si la variante no existe
         Task<bool> EliminarVarianteAsync(int id);
     }
 }

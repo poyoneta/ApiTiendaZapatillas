@@ -4,15 +4,11 @@
     {
         public int Id { get; set; }
 
-        public int ZapatillaId { get; set; }
-        public int ColorId { get; set; }
+        public int ZapatillaColorId { get; set; }
+        public ZapatillaColor? ZapatillaColor { get; set; }
 
         public int Talla { get; set; }
         public decimal Precio { get; set; }
         public int Stock { get; set; }
-
-        public Zapatilla? Zapatilla { get; set; }
-        public Color? Color { get; set; }
-        public ICollection<Imagen> Imagenes { get; set; } = new List<Imagen>();
     }
 }

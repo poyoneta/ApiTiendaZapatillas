@@ -37,6 +37,13 @@ namespace ApiTiendaZapas.Services
             return zapatilla;
         }
 
+        public async Task<ZapatillaColor> CrearZapatillaColorAsync(ZapatillaColor zapatillaColor)
+        {
+            _context.Zapatilla_Colores.Add(zapatillaColor);
+            await _context.SaveChangesAsync();
+            return zapatillaColor;
+        }
+
         public async Task<Variante> CrearVarianteAsync(Variante variante)
         {
             _context.Variantes.Add(variante);
@@ -44,26 +51,11 @@ namespace ApiTiendaZapas.Services
             return variante;
         }
 
-        public async Task<Imagen> SubirImagenAsync(IFormFile archivo, int orden, int? idZapatilla, int? idVariante)
+        public async Task<Imagen> SubirImagenAsync(IFormFile archivo, int orden, bool esPrincipal, int zapatillaColorId)
         {
-            int? zapatillaId = (idZapatilla == 0) ? null : idZapatilla;
-            int? varianteId = (idVariante == 0) ? null : idVariante;
-
-            // Validamos que la zapatilla/variante exista ANTES de tocar el bucket —
-            // así nunca subimos un archivo que después no podamos asociar a nada.
-            if (zapatillaId.HasValue)
-            {
-                bool existeZapatilla = await _context.Zapatillas.AnyAsync(z => z.Id == zapatillaId.Value);
-                if (!existeZapatilla)
-                    throw new InvalidOperationException($"No existe una zapatilla con Id={zapatillaId.Value}.");
-            }
-
-            if (varianteId.HasValue)
-            {
-                bool existeVariante = await _context.Variantes.AnyAsync(v => v.Id == varianteId.Value);
-                if (!existeVariante)
-                    throw new InvalidOperationException($"No existe una variante con Id={varianteId.Value}.");
-            }
+            bool existeZapatillaColor = await _context.Zapatilla_Colores.AnyAsync(zc => zc.Id == zapatillaColorId);
+            if (!existeZapatillaColor)
+                throw new InvalidOperationException($"No existe la relación ZapatillaColor con Id={zapatillaColorId}.");
 
             string urlPublica = await _storageService.SubirArchivoAsync(archivo);
 
@@ -73,8 +65,8 @@ namespace ApiTiendaZapas.Services
                 {
                     Url = urlPublica,
                     Orden = orden,
-                    Id_zapatilla = zapatillaId,
-                    Id_variante = varianteId
+                    Es_Principal = esPrincipal,
+                    ZapatillaColorId = zapatillaColorId
                 };
 
                 _context.Imagenes.Add(nuevaImagen);
@@ -84,8 +76,6 @@ namespace ApiTiendaZapas.Services
             }
             catch
             {
-                // Red de seguridad: si por cualquier otro motivo falla el guardado
-                // en base, no dejamos el archivo huérfano en el bucket.
                 await _storageService.BorrarArchivoAsync(urlPublica);
                 throw;
             }
@@ -94,27 +84,23 @@ namespace ApiTiendaZapas.Services
         public async Task<bool> EliminarZapatillaAsync(int id)
         {
             var zapatilla = await _context.Zapatillas
-                .Include(z => z.Imagenes)
-                .Include(z => z.Variantes)
-                    .ThenInclude(v => v.Imagenes)
+                .Include(z => z.ZapatillaColores)
+                    .ThenInclude(zc => zc.Imagenes)
                 .FirstOrDefaultAsync(z => z.Id == id);
 
             if (zapatilla == null)
                 return false;
 
-            // Juntamos las imágenes propias de la zapatilla + las de todas sus variantes
-            var todasLasImagenes = zapatilla.Imagenes
-                .Concat(zapatilla.Variantes.SelectMany(v => v.Imagenes))
+            // Obtenemos las imágenes a través de los colorways
+            var todasLasImagenes = zapatilla.ZapatillaColores
+                .SelectMany(zc => zc.Imagenes)
                 .ToList();
 
-            // Borramos primero los archivos del bucket de Supabase Storage
             foreach (var imagen in todasLasImagenes)
             {
                 await _storageService.BorrarArchivoAsync(imagen.Url);
             }
 
-            // Borramos la zapatilla — el cascade en el DbContext se encarga
-            // de las filas de Imagen y Variante en la base
             _context.Zapatillas.Remove(zapatilla);
             await _context.SaveChangesAsync();
 
@@ -123,18 +109,10 @@ namespace ApiTiendaZapas.Services
 
         public async Task<bool> EliminarVarianteAsync(int id)
         {
-            var variante = await _context.Variantes
-                .Include(v => v.Imagenes)
-                .FirstOrDefaultAsync(v => v.Id == id);
+            var variante = await _context.Variantes.FindAsync(id);
 
             if (variante == null)
                 return false;
-
-            // Borramos primero los archivos del bucket que pertenecen a ESTA variante puntual
-            foreach (var imagen in variante.Imagenes)
-            {
-                await _storageService.BorrarArchivoAsync(imagen.Url);
-            }
 
             _context.Variantes.Remove(variante);
             await _context.SaveChangesAsync();

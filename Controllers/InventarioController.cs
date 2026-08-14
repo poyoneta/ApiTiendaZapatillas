@@ -1,9 +1,6 @@
 ﻿using ApiTiendaZapas.Data;
-using Microsoft.AspNetCore.Http;
-using ApiTiendaZapas.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
 
 namespace ApiTiendaZapas.Controllers
 {
@@ -22,8 +19,9 @@ namespace ApiTiendaZapas.Controllers
         public async Task<IActionResult> ObtenerVariantes(int id)
         {
             var variantes = await _context.Variantes
-                .Include(v => v.Color)
-                .Where(v => v.ZapatillaId == id)
+                .Include(v => v.ZapatillaColor)
+                    .ThenInclude(zc => zc!.Color)
+                .Where(v => v.ZapatillaColor!.ZapatillaId == id)
                 .ToListAsync();
 
             return Ok(variantes);
@@ -33,7 +31,8 @@ namespace ApiTiendaZapas.Controllers
         public async Task<IActionResult> StockBajo()
         {
             var variantes = await _context.Variantes
-                .Include(v => v.Color)
+                .Include(v => v.ZapatillaColor)
+                    .ThenInclude(zc => zc!.Color)
                 .Where(v => v.Stock < 5)
                 .ToListAsync();
 

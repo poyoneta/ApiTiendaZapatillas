@@ -36,6 +36,13 @@ namespace ApiTiendaZapas.Controllers
             return Ok(creada);
         }
 
+        [HttpPost("colorways")]
+        public async Task<IActionResult> CrearZapatillaColor(ZapatillaColor zapatillaColor)
+        {
+            var creado = await _adminService.CrearZapatillaColorAsync(zapatillaColor);
+            return Ok(creado);
+        }
+
         [HttpPost("variantes")]
         public async Task<IActionResult> CrearVariante(Variante variante)
         {
@@ -49,13 +56,13 @@ namespace ApiTiendaZapas.Controllers
             if (modelo.Archivo == null || modelo.Archivo.Length == 0)
                 return BadRequest("No se proporcionó ningún archivo de imagen.");
 
-            if (modelo.Id_zapatilla == null && modelo.Id_variante == null)
-                return BadRequest("La imagen debe estar asociada a una Zapatilla o a una Variante.");
+            if (modelo.ZapatillaColorId <= 0)
+                return BadRequest("La imagen debe estar asociada a un ZapatillaColorId válido.");
 
             try
             {
                 var imagen = await _adminService.SubirImagenAsync(
-                    modelo.Archivo, modelo.Orden, modelo.Id_zapatilla, modelo.Id_variante);
+                    modelo.Archivo, modelo.Orden, modelo.Es_Principal, modelo.ZapatillaColorId);
 
                 return Ok(imagen);
             }
@@ -96,7 +103,7 @@ namespace ApiTiendaZapas.Controllers
     {
         public IFormFile? Archivo { get; set; }
         public int Orden { get; set; }
-        public int? Id_zapatilla { get; set; }
-        public int? Id_variante { get; set; }
+        public bool Es_Principal { get; set; }
+        public int ZapatillaColorId { get; set; }
     }
 }
