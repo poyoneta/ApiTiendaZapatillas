@@ -33,7 +33,11 @@ namespace ApiTiendaZapas.Controllers
             var variantes = await _context.Variantes
                 .Include(v => v.ZapatillaColor)
                     .ThenInclude(zc => zc!.Color)
+                .Include(v => v.ZapatillaColor)
+                    .ThenInclude(zc => zc!.Zapatilla)
+                        .ThenInclude(z => z!.Marca)
                 .Where(v => v.Stock < 5)
+                .AsNoTracking()
                 .ToListAsync();
 
             return Ok(variantes);
@@ -55,4 +59,4 @@ namespace ApiTiendaZapas.Controllers
         }
     }
 }
-//hgola 
+//hgola
