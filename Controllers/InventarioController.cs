@@ -43,6 +43,22 @@ namespace ApiTiendaZapas.Controllers
             return Ok(variantes);
         }
 
+        // GET: api/inventario/todas (todas las variantes, con zapatilla, marca y color)
+        [HttpGet("todas")]
+        public async Task<IActionResult> TodasLasVariantes()
+        {
+            var variantes = await _context.Variantes
+                .Include(v => v.ZapatillaColor)
+                    .ThenInclude(zc => zc!.Color)
+                .Include(v => v.ZapatillaColor)
+                    .ThenInclude(zc => zc!.Zapatilla)
+                        .ThenInclude(z => z!.Marca)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return Ok(variantes);
+        }
+
         [HttpPut("stock/{id}")]
         public async Task<IActionResult> ActualizarStock(int id, int nuevoStock)
         {
