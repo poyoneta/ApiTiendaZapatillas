@@ -41,5 +41,10 @@ namespace ApiTiendaZapas.Services
         {
             return await _zapatillaRepo.ObtenerTodasLasImagenesAsync();
         }
+
+        public async Task<List<Color>> ObtenerColoresAsync()
+        {
+            return await _zapatillaRepo.ObtenerColoresAsync();
+        }
     }
 }

@@ -60,5 +60,13 @@ namespace ApiTiendaZapas.Controllers
             var imagenes = await _catalogoService.ObtenerTodasLasImagenesAsync();
             return Ok(imagenes);
         }
+
+        // GET: api/catalogo/colores (lista de colores con su Id, para armar colorways en el backoffice)
+        [HttpGet("colores")]
+        public async Task<IActionResult> ObtenerColores()
+        {
+            var colores = await _catalogoService.ObtenerColoresAsync();
+            return Ok(colores);
+        }
     }
 }

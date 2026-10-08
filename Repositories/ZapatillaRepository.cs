@@ -68,5 +68,10 @@ namespace ApiTiendaZapas.Repositories
         {
             return await _context.Imagenes.AsNoTracking().ToListAsync();
         }
+
+        public async Task<List<Color>> ObtenerColoresAsync()
+        {
+            return await _context.Colores.AsNoTracking().OrderBy(c => c.Id).ToListAsync();
+        }
     }
 }

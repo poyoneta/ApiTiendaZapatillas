@@ -17,5 +17,6 @@ namespace ApiTiendaZapas.Repositories
         Task<List<Zapatilla>> ObtenerPorMarcaAsync(int marcaId);
         Task<List<Marca>> ObtenerMarcasAsync();
         Task<List<Imagen>> ObtenerTodasLasImagenesAsync();
+        Task<List<Color>> ObtenerColoresAsync();
     }
 }
