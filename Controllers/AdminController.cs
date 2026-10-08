@@ -76,6 +76,70 @@ namespace ApiTiendaZapas.Controllers
             }
         }
 
+        [HttpPut("zapatillas/{id}")]
+        public async Task<IActionResult> EditarZapatilla(int id, [FromBody] ActualizarZapatillaDto dto)
+        {
+            try
+            {
+                var editada = await _adminService.EditarZapatillaAsync(id, dto.MarcaId, dto.Nombre, dto.Descripcion);
+                if (!editada)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("variantes/{id}")]
+        public async Task<IActionResult> EditarVariante(int id, [FromBody] ActualizarVarianteDto dto)
+        {
+            try
+            {
+                var editada = await _adminService.EditarVarianteAsync(id, dto.Talla, dto.Precio, dto.Stock);
+                if (!editada)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("imagenes/{id}/principal")]
+        public async Task<IActionResult> MarcarImagenPrincipal(int id)
+        {
+            var ok = await _adminService.MarcarImagenPrincipalAsync(id);
+            if (!ok)
+                return NotFound();
+
+            return NoContent();
+        }
+
+        [HttpDelete("colorways/{id}")]
+        public async Task<IActionResult> EliminarZapatillaColor(int id)
+        {
+            var eliminado = await _adminService.EliminarZapatillaColorAsync(id);
+            if (!eliminado)
+                return NotFound();
+
+            return NoContent();
+        }
+
+        [HttpDelete("imagenes/{id}")]
+        public async Task<IActionResult> EliminarImagen(int id)
+        {
+            var eliminada = await _adminService.EliminarImagenAsync(id);
+            if (!eliminada)
+                return NotFound();
+
+            return NoContent();
+        }
+
         [HttpDelete("zapatillas/{id}")]
         public async Task<IActionResult> EliminarZapatilla(int id)
         {
@@ -97,6 +161,20 @@ namespace ApiTiendaZapas.Controllers
 
             return NoContent();
         }
+    }
+
+    public class ActualizarZapatillaDto
+    {
+        public int? MarcaId { get; set; }
+        public string? Nombre { get; set; }
+        public string? Descripcion { get; set; }
+    }
+
+    public class ActualizarVarianteDto
+    {
+        public int? Talla { get; set; }
+        public decimal? Precio { get; set; }
+        public int? Stock { get; set; }
     }
 
     public class FormSubirImagen
